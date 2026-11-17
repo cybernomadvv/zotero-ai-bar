@@ -13,13 +13,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/freeshr1107-free/zotero-ai-bar.git"
+    "url": "git+https://github.com/cybernomadvv/zotero-ai-bar.git"
   },
   "author": "swcxito (original author); freeshr1107-free (fork maintainer)",
   "bugs": {
-    "url": "https://github.com/freeshr1107-free/zotero-ai-bar/issues"
+    "url": "https://github.com/cybernomadvv/zotero-ai-bar/issues"
   },
-  "homepage": "https://github.com/freeshr1107-free/zotero-ai-bar#readme",
+  "homepage": "https://github.com/cybernomadvv/zotero-ai-bar#readme",
   "license": "AGPL-3.0-or-later",
   "scripts": {
     "start": "zotero-plugin serve",
