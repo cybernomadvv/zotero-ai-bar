@@ -15,6 +15,7 @@ import { isReaderZoteroTab, updateSelectedZoteroTab } from './modules/chatWorksp
 import { codexRuntime } from './modules/codex/runtime';
 import { startChatSkinSync, stopChatSkinSync } from './utils/chatSkin';
 import { stopPaperTranslations } from './modules/paperTranslation';
+import { syncMagpieModels } from './modules/magpieModels';
 
 function zaibarDump(msg: string) {
   try {
@@ -114,6 +115,7 @@ async function onMainWindowLoad(win: _ZoteroTypes.MainWindow): Promise<void> {
         envKeys: Object.keys(userProviderConfigV2.env),
       });
     }
+    void syncMagpieModels();
 
     // Sync legacy llm.modelId to v2 composite format
     if (addon.data.userProviderConfigV2.active) {

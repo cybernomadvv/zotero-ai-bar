@@ -43,6 +43,7 @@ import { InlineButton } from '../components/buttons/inlineButton';
 import { codexHeadDetailsBlock, CODEX_HEAD_DETAILS_CLASS } from '../components/codexCardHeader';
 import { Icons } from '../components/common';
 import type { UserProviderConfigV2, CommonProviders, AddedProvider, AddedModel, ProviderId, Provider } from '../utils/providers';
+import { syncMagpieModels } from './magpieModels';
 
 /** Stable hook for the ChatGPT card's model list so refreshes can diff rows in place. */
 const CODEX_MODEL_LIST_ID = 'codex-model-list';
@@ -113,6 +114,7 @@ class ModelDialogV2 {
 
   async init() {
     await ensureCommonProviders();
+    await syncMagpieModels();
 
     if (!(this.root && this.addProviderButton && this.overlay && this.searchInput && this.providerList)) {
       return;
@@ -500,8 +502,9 @@ class ModelDialogV2 {
     const cp = this.getActiveProviders();
     const commonProvider = cp?.[providerId];
     const addedProvider = v2.addedProviders[providerId];
-    const envKeys = filterGoogleEnvKeys(providerId, addedProvider?.env ?? commonProvider?.env ?? []);
+    const envKeys = filterGoogleEnvKeys(providerId, (providerId === 'magpie' ? commonProvider?.env : addedProvider?.env) ?? commonProvider?.env ?? []);
     const envValues = migrateGoogleEnvValues(providerId, v2.env[providerId] ?? {});
+    if (providerId === 'magpie' && !envValues.MAGPIE_API_KEY && envValues.API_KEY) envValues.MAGPIE_API_KEY = envValues.API_KEY;
     const isCustom = !commonProvider;
 
     ztoolkit.log('[ModelDialogV2] createAndAppendCard:', {
@@ -544,7 +547,7 @@ class ModelDialogV2 {
   }
 
   private getActiveProviders(): CommonProviders {
-    return addon.data.liveProviders ?? addon.data.commonProviders!;
+    return { ...addon.data.commonProviders, ...addon.data.liveProviders, magpie: addon.data.commonProviders!.magpie };
   }
 
   private getAvailableProviders(): Array<[string, Provider]> {
@@ -802,7 +805,7 @@ class ModelDialogV2 {
     v2.addedModels = newAddedModels;
     v2.addedProviders = newAddedProviders;
 
-    ztoolkit.log('[ModelDialogV2.saveSettings] new addon.data.userProviderConfigV2:', v2);
+    ztoolkit.log('[ModelDialogV2.saveSettings] Saved provider count:', Object.keys(v2.addedProviders).length);
     await saveV2Config(v2);
   }
 

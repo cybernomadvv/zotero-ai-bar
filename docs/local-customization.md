@@ -80,3 +80,12 @@
 - 本次修改前备份 local-backups/20261116-235140/（包含 prefs.js、models-v2.json、扩展注册及原包）；备份文件可能含账号配置，不应分发。
 - 最新 dist/zotero-ai-bar-1.6.10-custom-ui.xpi SHA256：02ad43ad87b558073644f7532f766d952be1e7cc14fd70ea078cd0dec6c1ead3。
 - 限制：SDK 集成测试在 Node 中执行，未在 Zotero 内发起真实论文问答；未做真实鼠标选区的视觉抖动对比，不能据静态检查宣称视觉问题彻底消失。
+
+## Magpie 动态模型同步及凭据修复
+
+- 新增 `src/modules/magpieModels.ts`：使用 Zotero 中配置的 Magpie 地址及凭据请求 `/models`，在启动及打开模型选择器时刷新；保留当前选择、已关闭模型和已保存列表，新增模型自动启用。服务声明支持 priority 时生成对应 Fast 选项。
+- 在线公共服务商目录与本地目录合并，避免公共目录不含 Magpie 时丢失其模型及 API Key 字段定义；设置界面保留标准 `MAGPIE_API_KEY` 字段并兼容旧 `API_KEY` 值。保存设置时不再记录完整配置对象。
+- `scripts/verify-magpie-model-sync.mjs` 验证新模型、重复刷新、当前选择及关闭状态保留、Fast 选项、离线及无效响应保留原配置。
+- 隔离 Zotero 中打开真实 PDF，验证两个 Hy4 flash 模型出现在实际模型下拉框并可选择；打开、关闭模型设置后凭据保留。真实 Hy4 flash 问答返回 `MAGPIE_ZOTERO_OK`。
+- 本机升级前备份至 `local-backups/20261117-144730/`。仅在本地恢复缺失的 Magpie 配置及凭据，保持当前选择 `workbuddy/glm-5.3-flashx`；凭据不写入源码或安装包。
+

@@ -503,6 +503,7 @@ export function convertLegacyLLMConfigByKey(
 
 export const PROVIDER_ENV_KEY_MAP: Record<string, string> = {
   openai: 'OPENAI_API_KEY',
+  magpie: 'MAGPIE_API_KEY',
   anthropic: 'ANTHROPIC_API_KEY',
   google: 'GEMINI_API_KEY',
   'alibaba-cn': 'DASHSCOPE_API_KEY',

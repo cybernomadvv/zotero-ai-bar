@@ -23,6 +23,7 @@ import { getString } from '../utils/locale';
 import { DropdownMenuGroup, closeDropdownMenu, fadeCloseDropdownMenu, toggleDropdownMenu } from './dropdownMenu';
 import { openDialog } from '../modules/modelDialog';
 import type { AddedModel, ProviderId } from '../utils/providers';
+import { syncMagpieModels } from '../modules/magpieModels';
 
 function resolveModelDisplayName(): string {
   const active = addon.data.userProviderConfigV2?.active;
@@ -111,9 +112,22 @@ export function ModelInfo(opts?: { dropUp?: boolean }): TagElementProps {
   };
 }
 
-function toggleModelDropdown(anchor: HTMLElement, dropUp = false) {
+async function toggleModelDropdown(anchor: HTMLElement, dropUp = false) {
   const container = (anchor.closest('.ai-bar-container') || anchor.closest('[data-model-dropdown-container]')) as HTMLElement | null;
   if (!container) return;
+  const root = anchor.getRootNode() as Document | ShadowRoot;
+  if (container.querySelector('#ai-bar-model-dropdown')) {
+    closeDropdownMenu(root, 'ai-bar-model-dropdown');
+    return;
+  }
+  if (anchor.dataset.modelSyncPending) return;
+  anchor.dataset.modelSyncPending = 'true';
+  try {
+    await syncMagpieModels();
+  } finally {
+    delete anchor.dataset.modelSyncPending;
+  }
+  if (!anchor.isConnected) return;
 
   const active = addon.data.userProviderConfigV2?.active;
   const groups: DropdownMenuGroup[] = [];
