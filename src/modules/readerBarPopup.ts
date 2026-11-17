@@ -25,9 +25,10 @@ import { aiBarCommands } from '../utils/prompts';
 import { ActionButton } from '../components/buttons/actionButton';
 import { ModelInfo, registerModelInfoAnchor } from '../components/modelInfo';
 import { ExpandButton, ExpandMenuItem } from '../components/buttons/expandButton';
-import { Icons } from '../components/common';
 import { refreshSelectionHints } from './selectionHint';
 import { getArticleSessionId } from './chatWorkspace';
+import { toolbarLayout } from './toolbarLayout';
+import { clearAllFloatingTranslations, clearFloatingTranslation, showFloatingTranslation } from './floatingTranslation';
 
 function getTargetLanguage(): string {
   const prefLang = getPref('translate.targetLanguage');
@@ -42,7 +43,6 @@ export function formatPopupActionLabel(label: string, locale: string = Zotero.lo
 // (for example while scrolling). Keep at most one lifecycle watcher per
 // reader so an older popup cannot later clear the state of a newer one.
 const selectionPopupWatchers = new Map<object, () => void>();
-const autoTranslations = new Map<object, { key: string; cancel?: () => void }>();
 
 function getReaderSelectionPosition(reader: any): unknown {
   try {
@@ -54,13 +54,8 @@ function getReaderSelectionPosition(reader: any): unknown {
   }
 }
 
-function clearAutoTranslation(reader: object) {
-  autoTranslations.get(reader)?.cancel?.();
-  autoTranslations.delete(reader);
-}
-
 function clearReaderSelection(reader: object) {
-  clearAutoTranslation(reader);
+  clearFloatingTranslation(reader);
   if (addon.data.selection.currentReader !== reader) return;
   addon.data.selection.text = undefined;
   addon.data.selection.contextPromise = undefined;
@@ -229,7 +224,6 @@ export function registerReaderInitializer() {
         }
         const onPopupGone = () => {
           stop();
-          clearAutoTranslation(reader);
           // Selecting new text re-renders the popup: a newer selection has
           // already overwritten the cached state — leave it alone.
           if (addon.data.selection.currentAnnotation !== annotation) return;
@@ -258,7 +252,17 @@ export function registerReaderInitializer() {
           }, 400);
         }
       }
-      smartAutoTranslate(reader, params, container);
+      // Automatic translation stays in this popup and never activates a chat host.
+      if (container && getPref('translate.enableAuto')) {
+        const contextMode = getPref('translate.extendContext');
+        const contextPromise =
+          contextMode === 'never'
+            ? undefined
+            : contextMode === 'always' && !getPref('extend-selection-context')
+              ? getSelectionContext(reader, params)
+              : addon.data.selection.contextPromise;
+        showFloatingTranslation(reader, container, params.annotation.text.trim(), params.annotation.position, contextPromise);
+      }
     }
   };
   addon.data._readerPopupHandler = handler;
@@ -266,56 +270,11 @@ export function registerReaderInitializer() {
 }
 
 export function unregisterReaderInitializer() {
+  clearAllFloatingTranslations();
   for (const stop of [...selectionPopupWatchers.values()]) stop();
   selectionPopupWatchers.clear();
-  for (const reader of autoTranslations.keys()) clearAutoTranslation(reader);
   if (addon.data._readerPopupHandler) {
     Zotero.Reader.unregisterEventListener('renderTextSelectionPopup', addon.data._readerPopupHandler);
-  }
-}
-
-function smartAutoTranslate(
-  reader: _ZoteroTypes.ReaderInstance<'pdf' | 'epub' | 'snapshot'>,
-  params: { annotation: _ZoteroTypes.Annotations.AnnotationJson },
-  container: HTMLElement | null
-) {
-  const selectedText = params.annotation.text?.trim();
-  const view = container?.ownerDocument.defaultView;
-  if (getPref('translate.enableAuto') && selectedText && container && view) {
-    // Annotation objects are recreated on popup renders. Compare the text
-    // and document position so scrolling/dismissal cannot translate twice.
-    const key = JSON.stringify([selectedText, params.annotation.position]);
-    const previous = autoTranslations.get(reader);
-    if (previous?.key === key && !previous.cancel) return;
-    clearAutoTranslation(reader);
-    const autoTranslateContext = getPref('translate.extendContext');
-    const isExtendContextEnabled = getPref('extend-selection-context');
-    const followContextSetting =
-      autoTranslateContext === 'follow' ||
-      (autoTranslateContext === 'always' && isExtendContextEnabled) ||
-      (autoTranslateContext === 'never' && !isExtendContextEnabled);
-    const selectionContextPromise = followContextSetting
-      ? addon.data.selection.contextPromise
-      : autoTranslateContext === 'always'
-        ? getSelectionContext(reader, params)
-        : Promise.resolve(undefined);
-    const pending: { key: string; cancel?: () => void } = { key };
-    autoTranslations.set(reader, pending);
-    // Wait until React has committed the popup before checking its lifetime.
-    const timer = view.setTimeout(() => {
-      pending.cancel = undefined;
-      if (autoTranslations.get(reader) !== pending) return;
-      if (getReaderSelectionPosition(reader) === null) {
-        clearReaderSelection(reader);
-        return;
-      }
-      if (!container.isConnected || !getPref('translate.enableAuto')) {
-        clearAutoTranslation(reader);
-        return;
-      }
-      void sendStructuredTranslation(reader, selectionContextPromise, selectedText);
-    }, 0);
-    pending.cancel = () => view.clearTimeout(timer);
   }
 }
 
@@ -326,6 +285,12 @@ async function sendStructuredTranslation(
 ) {
   const selectedText = selectedTextSnapshot ?? addon.data.selection.text;
   if (!selectedText) return;
+  const contextMode = getPref('translate.extendContext');
+  if (contextMode === 'never') contextPromise = undefined;
+  else if (contextMode === 'always' && !contextPromise && addon.data.selection.currentReader === reader) {
+    const annotation = addon.data.selection.currentAnnotation;
+    if (annotation?.text?.trim() === selectedText) contextPromise = getSelectionContext(reader, { annotation });
+  }
 
   await addon.chatManager.sendTranslationRequest({
     targetLanguage: getTargetLanguage(),
@@ -365,11 +330,13 @@ function renderAIBar(doc: Document, reader: _ZoteroTypes.ReaderInstance<'pdf' | 
     if (!input) return;
     ztoolkit.log('Action:', input);
     const command = aiBarCommands[input];
+    const custom = (addon.data.userPrompts ?? []).find((prompt) => `user-${prompt.id}` === input);
     const selectedText = addon.data.selection.text;
     const contextPromise = selectedText ? addon.data.selection.contextPromise : undefined;
 
-    if (!selectedText && command) return;
+    if (!selectedText && (command || custom)) return;
 
+    clearFloatingTranslation(reader);
     hideContainerOnTimeout();
     disableAll();
 
@@ -380,8 +347,8 @@ function renderAIBar(doc: Document, reader: _ZoteroTypes.ReaderInstance<'pdf' | 
 
     await addon.chatManager.sendChatRequest({
       // If input matches a command, use the command's prompt; otherwise treat input as a custom prompt
-      userPrompt: command?.getPrompt(getTargetLanguage()) ?? input,
-      displayUserText: command ? formatPopupActionLabel(getString(command.label)) : input,
+      userPrompt: custom?.prompt ?? command?.getPrompt(getTargetLanguage()) ?? input,
+      displayUserText: command ? formatPopupActionLabel(getString(command.label)) : custom ? formatPopupActionLabel(custom.name) : input,
       selectionSnapshot: { text: selectedText, contextPromise },
       sourceLabel: getReaderSourceLabel(reader),
       isFromPopup: true,
@@ -394,56 +361,16 @@ function renderAIBar(doc: Document, reader: _ZoteroTypes.ReaderInstance<'pdf' | 
     });
   }
 
-  // Create AI buttons from commands in specific order: explain, translate, smartCopy
-  const CommandButtons = () => {
-    const commandOrder = ['explain', 'translate', 'smartCopy'];
-    return commandOrder.map((id) => {
-      const command = aiBarCommands[id];
-      return ActionButton({
-        label: getString(command.label),
-        icon: command.icon,
-        classList: ['ai-btn'],
-        onClick: async () => handleAction(command.id),
-      });
-    });
-  };
-
-  // Build menu items: built-in + user prompts
-  const expandMenuItems: ExpandMenuItem[] = [
-    {
-      id: 'summarize',
-      icon: aiBarCommands.summarize.icon,
-      label: getString(aiBarCommands.summarize.label),
-      onClick: () => handleAction('summarize'),
-    },
-  ];
-
-  // Add user prompts from addon.data.userPrompts
-  const userPrompts = addon.data.userPrompts || [];
-  for (const up of userPrompts) {
-    expandMenuItems.push({
-      id: `user-${up.id}`,
-      icon: Icons.Sparkle,
-      label: up.name,
-      onClick: async () => {
-        const selectedText = addon.data.selection.text;
-        if (!selectedText) return;
-        hideContainerOnTimeout();
-        disableAll();
-        await addon.chatManager.sendChatRequest({
-          userPrompt: up.prompt,
-          displayUserText: formatPopupActionLabel(up.name),
-          selectionSnapshot: { text: selectedText, contextPromise: addon.data.selection.contextPromise },
-          sourceLabel: getReaderSourceLabel(reader),
-          isFromPopup: true,
-          itemId: reader.itemID!,
-          sourceTabId: reader.tabID,
-          sessionId: getArticleSessionId(reader.tabID),
-          sessionKind: 'article',
-        });
-      },
-    });
-  }
+  const layout = toolbarLayout();
+  const directActions = layout.ordered.filter((action) => layout.visible.has(action.id));
+  const expandMenuItems: ExpandMenuItem[] = layout.ordered
+    .filter((action) => !layout.visible.has(action.id))
+    .map((action) => ({
+      id: action.id,
+      icon: action.icon,
+      label: action.label,
+      onClick: () => handleAction(action.id),
+    }));
 
   const fragment = ztoolkit.UI.createElement(doc, 'fragment', {
     children: [
@@ -452,11 +379,10 @@ function renderAIBar(doc: Document, reader: _ZoteroTypes.ReaderInstance<'pdf' | 
         classList: ['ai-bar-container'],
         children: [
           ModelInfo(),
-          ...CommandButtons(),
-          ExpandButton({
-            label: getString('reader-bar-expand'),
-            menuItems: expandMenuItems,
-          }),
+          ...directActions.map((action) =>
+            ActionButton({ label: action.label, icon: action.icon, classList: ['ai-btn'], onClick: () => handleAction(action.id) })
+          ),
+          ...(expandMenuItems.length ? [ExpandButton({ label: getString('reader-bar-expand'), menuItems: expandMenuItems })] : []),
           // Ask (Input Group)
           {
             tag: 'div',
@@ -464,8 +390,9 @@ function renderAIBar(doc: Document, reader: _ZoteroTypes.ReaderInstance<'pdf' | 
             children: [
               {
                 tag: 'textarea',
+                attributes: { 'aria-label': getString('reader-bar-ask-placeholder') },
                 properties: {
-                  placeholder: getString('reader-bar-ask-placeholder'),
+                  placeholder: '',
                   rows: 1,
                 },
                 listeners: [
@@ -567,6 +494,8 @@ function renderAIBar(doc: Document, reader: _ZoteroTypes.ReaderInstance<'pdf' | 
   // textarea's native editing behavior (form controls take precedence).
   const popupTextarea = fragment.querySelector('textarea') as HTMLTextAreaElement | null;
   popupTextarea?.setAttribute('contenteditable', 'true');
+  // Avoid painting at the default position before viewport correction.
+  container.style.visibility = 'hidden';
   function hideContainerOnTimeout(delay: number = 500) {
     setTimeout(() => {
       container.style.display = 'none';
@@ -574,10 +503,13 @@ function renderAIBar(doc: Document, reader: _ZoteroTypes.ReaderInstance<'pdf' | 
   }
 
   function adjustPopupPosition() {
-    if (!container) return;
-    const rect = container.getBoundingClientRect();
+    if (!container.isConnected) return;
     const docWidth = doc.documentElement.clientWidth;
     const margin = 10;
+    const sidebar = doc.getElementById('sidebarContainer');
+    const sidebarRight = sidebar ? sidebar.getBoundingClientRect().right : 0;
+    container.style.maxWidth = `${Math.max(180, docWidth - sidebarRight - margin * 2)}px`;
+    const measured = container.getBoundingClientRect();
 
     // The left boundary must account for the reader's left sidebar
     // (thumbnails / annotations / outline). When open it sits at the left edge
@@ -586,24 +518,23 @@ function renderAIBar(doc: Document, reader: _ZoteroTypes.ReaderInstance<'pdf' | 
     // AI bar slide left and overlap the sidebar. #sidebarContainer is only in
     // the DOM while the sidebar is open, so a null result means the sidebar is
     // closed and the left boundary is just `margin`.
-    const sidebar = doc.getElementById('sidebarContainer');
-    const sidebarRight = sidebar ? sidebar.getBoundingClientRect().right : 0;
     const leftBound = Math.max(margin, sidebarRight + margin);
 
     let shiftX = 0;
-    if (rect.left < leftBound) {
-      shiftX = leftBound - rect.left;
-    } else if (rect.right > docWidth - margin) {
-      shiftX = docWidth - margin - rect.right;
+    if (measured.left < leftBound) {
+      shiftX = leftBound - measured.left;
+    } else if (measured.right > docWidth - margin) {
+      shiftX = docWidth - margin - measured.right;
     }
 
     if (shiftX !== 0) {
       container.style.transform = `translateX(calc(-50% + ${shiftX}px))`;
     }
+    container.style.visibility = 'visible';
   }
 
-  // Adjust popup position if it exceeds the reader boundaries.
-  setTimeout(adjustPopupPosition, 0);
+  // Position after React attaches the fragment, before the first visible paint.
+  doc.defaultView?.requestAnimationFrame(adjustPopupPosition);
 
   // for click end
   const disableAll = () => {

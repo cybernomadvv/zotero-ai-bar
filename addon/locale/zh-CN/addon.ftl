@@ -1,4 +1,4 @@
-prefs-title = AI工具栏
+prefs-title = zotero AI bar
 
 pref-provider-alibaba = 阿里云
 pref-provider-volcengine = 火山引擎
@@ -40,11 +40,11 @@ input-screenshot-full-tooltip = 已达到 9 张图片上限
 input-thinking-tooltip = 思考强度
 thinking-effort-title = 思考深度
 
-sidepane-title = AI-Bar 速答
+sidepane-title = zotero AI bar
 sidepane-clear-tooltip = 清空对话
 sidepane-collapse-tooltip = 收起面板
-sidepane-toggle-tooltip = 展开 / 收起 AI-Bar 面板
-chat-window-open-tooltip = 打开 AI-Bar 独立窗口
+sidepane-toggle-tooltip = 展开 / 收起 zotero AI bar 面板
+chat-window-open-tooltip = 打开 zotero AI bar 独立窗口
 chat-host-switch-to-window = 在独立窗口中打开
 chat-host-switch-to-sidebar = 收回侧边栏
 chat-host-switch-busy = 请等待当前回答完成或停止后再切换
@@ -199,7 +199,7 @@ thinking-effort-xhigh = 极高
 
 input-chat-mode-tooltip = 对话模式
 chat-mode-title = 对话模式
-chat-mode-normal = 普通
+chat-mode-normal = 快捷
 chat-mode-full-text = 全文
 chat-mode-agent = Agent
 thinking-card-title = 思考中

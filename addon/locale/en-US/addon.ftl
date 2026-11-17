@@ -1,4 +1,4 @@
-prefs-title = AI Bar
+prefs-title = zotero AI bar
 
 pref-provider-alibaba = Alibaba Cloud
 pref-provider-volcengine = Volcano Engine
@@ -40,11 +40,11 @@ input-screenshot-full-tooltip = Image limit reached (9)
 input-thinking-tooltip = Thinking effort
 thinking-effort-title = Thinking depth
 
-sidepane-title = AI-Bar Answer
+sidepane-title = zotero AI bar
 sidepane-clear-tooltip = Clear conversation
 sidepane-collapse-tooltip = Collapse panel
-sidepane-toggle-tooltip = Toggle AI-Bar panel
-chat-window-open-tooltip = Open AI-Bar window
+sidepane-toggle-tooltip = Toggle zotero AI bar panel
+chat-window-open-tooltip = Open zotero AI bar window
 chat-host-switch-to-window = Open in a separate window
 chat-host-switch-to-sidebar = Move back to the sidebar
 chat-host-switch-busy = Finish or stop the current response before switching

@@ -236,9 +236,14 @@
     </vbox>
   </groupbox>
   <groupbox>
+    <label><html:h2>划词工具栏功能排布</html:h2></label>
+    <html:div id="__addonRef__-toolbar-layout" />
+  </groupbox>
+  <groupbox>
     <label>
       <html:h2 data-l10n-id="pref-translate" />
     </label>
+    <description>本地英译中：ECDICT 词典 + OPUS-MT INT8。CPU 两线程，空闲 90 秒自动释放本地模型进程。</description>
     <hbox align="center" style="margin-top: 10px">
       <html:label data-l10n-id="pref-translate-target-language" flex="1" />
       <html:select class="select" id="__addonRef__-translate-target-language" preference="translate.targetLanguage">
@@ -247,10 +252,23 @@
     </hbox>
     <hbox align="center" style="margin-top: 10px">
       <html:label data-l10n-id="pref-translate-thinking-depth" flex="1" />
-      <radiogroup preference="translate.thinkingDepth" orient="horizontal" style="gap: 10px">
-        <radio value="minimum" data-l10n-id="pref-translate-thinking-depth-minimum" />
-        <radio value="follow-chat" data-l10n-id="pref-translate-thinking-depth-follow-chat" />
-      </radiogroup>
+      <html:select class="select" id="__addonRef__-translate-thinking-depth" preference="translate.thinkingDepth">
+        <html:option value="minimum" data-l10n-id="pref-translate-thinking-depth-minimum" />
+        <html:option value="follow-chat" data-l10n-id="pref-translate-thinking-depth-follow-chat" />
+        <html:option value="none" data-l10n-id="pref-translate-effort-none" />
+        <html:option value="low" data-l10n-id="pref-translate-effort-low" />
+        <html:option value="medium" data-l10n-id="pref-translate-effort-medium" />
+        <html:option value="high" data-l10n-id="pref-translate-effort-high" />
+        <html:option value="xhigh" data-l10n-id="pref-translate-effort-xhigh" />
+      </html:select>
+    </hbox>
+    <hbox align="center" style="margin-top: 10px">
+      <html:label data-l10n-id="pref-translate-service-tier" flex="1" />
+      <html:select class="select" id="__addonRef__-translate-service-tier" preference="translate.serviceTier">
+        <html:option value="follow-model" data-l10n-id="pref-translate-tier-follow" />
+        <html:option value="default" data-l10n-id="pref-translate-tier-default" />
+        <html:option value="priority" data-l10n-id="pref-translate-tier-fast" />
+      </html:select>
     </hbox>
     <hbox align="center" style="margin-top: 8px">
       <checkbox id="__addonRef__-auto-translate" preference="translate.enableAuto" data-l10n-id="pref-auto-translate" style="flex: 1" />

@@ -22,6 +22,7 @@ import type { ProviderId } from '../utils/providers';
 import { saveV2Config } from '../utils/providers';
 import { openDialog } from './modelDialog';
 import { openPromptEditor } from './promptEditor';
+import { renderToolbarLayoutPreferences } from './toolbarLayout';
 import { getLocaleID, getString } from '../utils/locale';
 import { setSeparateTranslationEnabled } from './chatWorkspace';
 import { CHAT_FONT_SIZE_LEVELS, getChatFontSizeValue, normalizeChatFontSizeIndex, refreshChatFontSize } from '../utils/chatFontSize';
@@ -100,6 +101,8 @@ const THINKING_EFFORTS = ['none', 'low', 'medium', 'high', 'xhigh'] as const;
 async function updatePrefsUI() {
   const doc = addon.data.prefs?.window.document;
   if (!doc) return;
+  const toolbarPreferences = doc.querySelector(makeId('toolbar-layout')) as HTMLElement | null;
+  if (toolbarPreferences) renderToolbarLayoutPreferences(toolbarPreferences);
   let refreshTranslationModelState: (() => void) | undefined;
 
   // Model selector
@@ -260,6 +263,16 @@ async function updatePrefsUI() {
     useTranslateModelCheckbox.addEventListener('command', () => syncTranslationModelState(true));
     useTranslateModelCheckbox.addEventListener('change', () => syncTranslationModelState(true));
     refreshTranslationModelState();
+  }
+
+  for (const [id, key] of [
+    ['translate-thinking-depth', 'translate.thinkingDepth'],
+    ['translate-service-tier', 'translate.serviceTier'],
+  ] as const) {
+    const selector = doc.querySelector(makeId(id)) as HTMLSelectElement | null;
+    if (!selector) continue;
+    selector.value = getPref(key);
+    selector.addEventListener('change', () => setPref(key, selector.value));
   }
 
   // Populate target language selector from Zotero.Styles.locales

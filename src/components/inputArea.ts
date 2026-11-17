@@ -33,6 +33,7 @@ import { contextTokenInfo } from '../utils/tokenUsage';
 import { createUserMessageBubble } from './userBubble';
 import { readChatTextDraft, writeChatTextDraft } from '../utils/chatDraft';
 import { applyChatInputFontSize } from '../utils/chatFontSize';
+import { setPaperControls } from '../modules/paperTranslationControls';
 
 export interface InputAreaContext {
   sessionId: string;
@@ -302,7 +303,8 @@ export function InputArea(
   // ── textarea ──────────────────────────────────────────────────────────────
   const textarea = doc.createElement('textarea') as HTMLTextAreaElement;
   textarea.rows = 1;
-  textarea.placeholder = getString('reader-bar-ask-placeholder');
+  textarea.placeholder = '';
+  textarea.setAttribute('aria-label', getString('reader-bar-ask-placeholder'));
   textarea.classList.add(
     'flex-1',
     'min-w-0',
@@ -365,7 +367,6 @@ export function InputArea(
   function updateThinkingBtnAppearance() {
     const effort = codexEfforts().length ? session.codexThinkingEffort || session.thinkingEffort : session.thinkingEffort;
     thinkingBtn.innerHTML = '';
-    thinkingBtn.appendChild(ztoolkit.UI.createElement(doc, 'span', IconView({ iconMarkup: Icons.Brain, sizeRem: 0.875 })));
     const labelSpan = doc.createElement('span');
     labelSpan.textContent = effortLabelMap[effort] || effort;
     thinkingBtn.appendChild(labelSpan);
@@ -437,8 +438,10 @@ export function InputArea(
   contextTokens.textContent = '';
   footerRow.appendChild(contextTokens);
 
+  const paperControls = doc.createElement('div');
   wrapper.appendChild(hintBar);
   wrapper.appendChild(container);
+  wrapper.appendChild(paperControls);
   wrapper.appendChild(footerRow);
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1068,6 +1071,7 @@ export function InputArea(
         sourceTabId,
         itemId: sourceTabId ? getReaderByTabId(sourceTabId)?.itemID : undefined,
       });
+      setPaperControls(paperControls, sessionKind === 'article' ? session.itemId : undefined, getPref('translate.targetLanguage') || Zotero.locale);
       removeThinkingDropdown();
       removeChatModeDropdown();
       updateChatModeBtnAppearance();

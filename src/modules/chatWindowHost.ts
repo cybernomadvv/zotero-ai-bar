@@ -81,7 +81,8 @@ function renderWindowTabs(doc: Document, tabs: HTMLElement): void {
     const label = doc.createElement('span');
     label.classList.add('zaibar-window-tab-label');
     label.textContent = kind === 'article' ? articleLabel : getString(`workspace-${kind}` as any);
-    tab.append(icon, label);
+    if (kind !== 'article') tab.appendChild(icon);
+    tab.appendChild(label);
     tab.addEventListener('click', () => {
       const root = tabs.closest(`#${WINDOW_ROOT_ID}`) as HTMLElement | null;
       if (root) root.dataset.skinPreview = 'false';

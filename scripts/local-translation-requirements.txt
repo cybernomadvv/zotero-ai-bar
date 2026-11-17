@@ -1,0 +1,5 @@
+# Binary-only dependencies used by the verified Windows Python 3.13 runtime.
+ctranslate2==4.9.0
+sentencepiece==0.2.3
+numpy==2.5.5
+PyYAML==6.0.3

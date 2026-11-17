@@ -44,7 +44,13 @@ declare namespace _ZoteroTypes {
       "translate.modelId": string;
       "translate.targetLanguage": string;
       "translate.thinkingDepth": string;
+      "translate.serviceTier": string;
       "translate.separateTab": boolean;
+      "toolbar.layout": string;
+      "translate.localPython": string;
+      "translate.localScript": string;
+      "translate.localModelDirectory": string;
+      "translate.localTokenFile": string;
       "imagePreview.location": string;
     };
   }

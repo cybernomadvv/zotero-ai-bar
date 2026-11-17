@@ -20,6 +20,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Shared controls for paper translation state and explicit decisions. */
+.paper-translation-controls { display:flex; flex-wrap:wrap; align-items:center; gap:5px; padding:5px 0; font-size:11px; white-space:normal; }
+.paper-translation-status { flex:1 1 130px; }
+.paper-translation-controls button, .floating-translation-footer button { border:1px solid currentColor; border-radius:4px; padding:3px 7px; background:transparent; color:inherit; cursor:pointer; font:inherit; }
+.floating-translation-body { white-space:pre-wrap; overflow-wrap:anywhere; padding:5px 0; }
+.floating-translation-footer { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:11px; white-space:normal; opacity:.85; }
+
+
 .connect-chatgpt-label {
   display: inline-grid;
   grid-template-columns: max-content;

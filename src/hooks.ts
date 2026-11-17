@@ -14,6 +14,7 @@ import { convertLegacyLLMConfigByKey, ensureCommonProviders, initIconCache, load
 import { isReaderZoteroTab, updateSelectedZoteroTab } from './modules/chatWorkspace';
 import { codexRuntime } from './modules/codex/runtime';
 import { startChatSkinSync, stopChatSkinSync } from './utils/chatSkin';
+import { stopPaperTranslations } from './modules/paperTranslation';
 
 function zaibarDump(msg: string) {
   try {
@@ -167,13 +168,14 @@ async function onMainWindowUnload(win: Window): Promise<void> {
 
 async function onShutdown(): Promise<void> {
   stopChatSkinSync();
+  unregisterReaderInitializer();
+  await stopPaperTranslations();
   await codexRuntime.stop(true);
   await addon.chatManager.flushHistory();
   ztoolkit.unregisterAll();
   if (addon.data._tabObserverID) {
     Zotero.Notifier.unregisterObserver(addon.data._tabObserverID);
   }
-  unregisterReaderInitializer();
   unregisterMainWindowSidePane();
   addon.data.dialog?.window?.close();
   if (isWindowAlive(addon.chatManager.chatWindow)) {

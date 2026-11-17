@@ -24,3 +24,9 @@ addon/content/app.css
 
 .claude
 .tmp-test
+
+# Local customization artifacts and profile backups
+local-backups/
+.local-runtime/
+local-startup.log
+dist/

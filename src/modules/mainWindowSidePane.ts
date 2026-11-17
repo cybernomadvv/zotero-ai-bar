@@ -192,10 +192,10 @@ export function registerChatToolbarButton(win: _ZoteroTypes.MainWindow): void {
     style.id = TOOLBAR_STYLE_ID;
     style.textContent = `
 #${TOOLBAR_BTN_ID} {
-  background-image: url("chrome://${config.addonRef}/content/icons/favicon.svg");
+  background-image: url("chrome://${config.addonRef}/content/icons/toolbar-line.svg");
   background-repeat: no-repeat;
   background-position: center;
-  background-size: contain;
+  background-size: 24px 24px;
 }`;
     doc.documentElement?.appendChild(style);
   }
@@ -382,10 +382,10 @@ export function registerMainWindowSidePane(win: _ZoteroTypes.MainWindow): void {
   font-size: 14px;
 }
 #${TOOLBAR_BTN_ID} {
-  background-image: url("chrome://${config.addonRef}/content/icons/favicon.svg");
+  background-image: url("chrome://${config.addonRef}/content/icons/toolbar-line.svg");
   background-repeat: no-repeat;
   background-position: center;
-  background-size: contain;
+  background-size: 24px 24px;
 }
 `;
 
@@ -1146,7 +1146,8 @@ function createWorkspaceTab(doc: Document, kind: ChatSessionKind, articleLabel: 
   const label = doc.createElement('span');
   label.classList.add('zaibar-workspace-tab-label');
   label.textContent = kind === 'article' ? articleLabel || getString('workspace-article') : getString(`workspace-${kind}` as any);
-  tab.append(icon, label);
+  if (kind !== 'article') tab.appendChild(icon);
+  tab.appendChild(label);
 
   if (kind === 'translation') {
     const close = doc.createElement('span');

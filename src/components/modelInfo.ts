@@ -19,9 +19,7 @@
 import { TagElementProps } from 'zotero-plugin-toolkit';
 import { setPref } from '../utils/prefs';
 import { saveV2Config } from '../utils/providers';
-import { analyzeModelName, getModelIconPath } from '../utils/modelAnalyzer';
 import { getString } from '../utils/locale';
-import { IconView } from './iconView';
 import { DropdownMenuGroup, closeDropdownMenu, fadeCloseDropdownMenu, toggleDropdownMenu } from './dropdownMenu';
 import { openDialog } from '../modules/modelDialog';
 import type { AddedModel, ProviderId } from '../utils/providers';
@@ -37,53 +35,15 @@ function resolveModelDisplayName(): string {
   return active.modelId;
 }
 
-function formatModelInfoPart(part: string): string {
-  const value = part.trim();
-  if (!value) return '';
-
-  // Preserve source tokens that are written as acronyms, such as ASR, VL, or MT.
-  if (/^[A-Z0-9]+$/.test(value) && /[A-Z]/.test(value)) return value;
-  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
-}
-
 function buildCurrentModelInfoChildren(): TagElementProps[] {
-  const modelName = resolveModelDisplayName();
-  const modelAnalysis = analyzeModelName(modelName);
-  const iconPath = getModelIconPath(addon.data.userProviderConfigV2?.active?.providerId === 'codex-subscription' ? 'gpt' : modelAnalysis.family);
-
-  const displayVersion = [formatModelInfoPart(modelAnalysis.version), ...modelAnalysis.variantParts.map(formatModelInfoPart)]
-    .filter(Boolean)
-    .join(' ');
-  const displayType = (modelAnalysis.typeParts.length > 0 ? modelAnalysis.typeParts : [modelAnalysis.type])
-    .map(formatModelInfoPart)
-    .filter(Boolean)
-    .join(' ');
-
-  const children: TagElementProps[] = [
-    IconView({
-      iconMarkup: iconPath,
-      extraClasses: ['model-info-icon'],
-      sizeRem: 1.5,
-    }),
+  const modelName = resolveModelDisplayName() || getString('model-dialog-add-model');
+  return [
+    {
+      tag: 'span',
+      classList: ['model-info-name'],
+      properties: { textContent: modelName, title: modelName },
+    },
   ];
-
-  if (displayVersion) {
-    children.push({
-      tag: 'span',
-      classList: ['model-info-version'],
-      properties: { textContent: displayVersion },
-    });
-  }
-
-  if (displayType) {
-    children.push({
-      tag: 'span',
-      classList: ['model-info-type'],
-      properties: { textContent: displayType },
-    });
-  }
-
-  return children;
 }
 
 function updateModelInfoDisplay(container: HTMLElement) {
@@ -174,19 +134,6 @@ function toggleModelDropdown(anchor: HTMLElement, dropUp = false) {
       id: `${providerId}::${m.id}`,
       label: m.name,
       selected: active?.providerId === providerId && active?.modelId === m.id,
-      renderLeading: (doc: Document) => {
-        const holder = doc.createElement('span');
-        holder.className = 'model-dropdown-icon-holder';
-        ztoolkit.UI.appendElement(
-          IconView({
-            iconMarkup: getModelIconPath(providerId === 'codex-subscription' ? 'gpt' : m.family),
-            extraClasses: ['model-dropdown-icon'],
-            sizeRem: 1.2,
-          }),
-          holder
-        );
-        return holder;
-      },
       onClick: () => {
         addon.data.userProviderConfigV2!.active = {
           providerId,

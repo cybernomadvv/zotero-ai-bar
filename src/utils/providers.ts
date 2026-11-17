@@ -76,6 +76,9 @@ export interface LimitConfig {
 
 /** 模型定义 */
 export interface Model {
+  /** Local Magpie variants share an upstream model but select a service tier. */
+  requestModelId?: string;
+  serviceTier?: 'priority';
   /** Subscription runtime capabilities, not inferred from a static catalog. */
   reasoningEfforts?: string[];
   id: string;
