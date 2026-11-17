@@ -502,7 +502,10 @@ class ModelDialogV2 {
     const cp = this.getActiveProviders();
     const commonProvider = cp?.[providerId];
     const addedProvider = v2.addedProviders[providerId];
-    const envKeys = filterGoogleEnvKeys(providerId, (providerId === 'magpie' ? commonProvider?.env : addedProvider?.env) ?? commonProvider?.env ?? []);
+    const envKeys = filterGoogleEnvKeys(
+      providerId,
+      (providerId === 'magpie' ? commonProvider?.env : addedProvider?.env) ?? commonProvider?.env ?? []
+    );
     const envValues = migrateGoogleEnvValues(providerId, v2.env[providerId] ?? {});
     if (providerId === 'magpie' && !envValues.MAGPIE_API_KEY && envValues.API_KEY) envValues.MAGPIE_API_KEY = envValues.API_KEY;
     const isCustom = !commonProvider;

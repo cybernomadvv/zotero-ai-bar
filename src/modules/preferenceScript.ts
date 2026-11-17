@@ -27,6 +27,7 @@ import { getLocaleID, getString } from '../utils/locale';
 import { setSeparateTranslationEnabled } from './chatWorkspace';
 import { CHAT_FONT_SIZE_LEVELS, getChatFontSizeValue, normalizeChatFontSizeIndex, refreshChatFontSize } from '../utils/chatFontSize';
 import { normalizeChatSkin, registerChatSkinRoot } from '../utils/chatSkin';
+import { openSkillManager } from './skills/skillManager';
 
 export async function registerPrefsScripts(_window: Window) {
   const prefsRoot = _window.document.getElementById(`${config.addonRef}-prefs-root`);
@@ -104,6 +105,8 @@ async function updatePrefsUI() {
   const toolbarPreferences = doc.querySelector(makeId('toolbar-layout')) as HTMLElement | null;
   if (toolbarPreferences) renderToolbarLayoutPreferences(toolbarPreferences);
   let refreshTranslationModelState: (() => void) | undefined;
+  const skillManagerButton = doc.querySelector(makeId('skill-manager-button'));
+  skillManagerButton?.addEventListener('click', openSkillManager);
 
   // Model selector
   const modelSelector = doc.querySelector(makeId('model-selector')) as HTMLSelectElement;

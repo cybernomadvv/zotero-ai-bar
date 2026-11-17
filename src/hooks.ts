@@ -16,6 +16,8 @@ import { codexRuntime } from './modules/codex/runtime';
 import { startChatSkinSync, stopChatSkinSync } from './utils/chatSkin';
 import { stopPaperTranslations } from './modules/paperTranslation';
 import { syncMagpieModels } from './modules/magpieModels';
+import { skillsStore } from './modules/skills/skillStore';
+import { onSkillManagerLoad } from './modules/skills/skillManager';
 
 function zaibarDump(msg: string) {
   try {
@@ -59,6 +61,8 @@ async function onStartup() {
     if (getPref('chat.openOnStartup') && addon.chatManager.getCurrentHostMode() === 'window') {
       await ensureChatWindowReady();
     }
+
+    await skillsStore.initialize();
 
     // Mark initialized as true to confirm plugin loading status
     // outside the plugin (e.g. scaffold testing process)
@@ -174,6 +178,7 @@ async function onShutdown(): Promise<void> {
   await stopPaperTranslations();
   await codexRuntime.stop(true);
   await addon.chatManager.flushHistory();
+  await skillsStore.flush();
   ztoolkit.unregisterAll();
   if (addon.data._tabObserverID) {
     Zotero.Notifier.unregisterObserver(addon.data._tabObserverID);
@@ -220,6 +225,9 @@ async function onPrefsEvent(type: string, data: { [key: string]: any }) {
       break;
     case 'promptEditorLoad':
       onPromptEditorLoad(data.window);
+      break;
+    case 'skillManagerLoad':
+      await onSkillManagerLoad(data.window);
       break;
     default:
       return;

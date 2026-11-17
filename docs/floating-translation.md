@@ -48,7 +48,11 @@ Preserve the meaning, academic terminology, paragraph/list structure, and mathem
 用户消息是 JSON 数据，形如：
 
 ```json
-{"targetLanguage":"zh-CN","selectedText":"selected passage","surroundingContext":["nearby preceding text","selected passage","nearby following text"]}
+{
+  "targetLanguage": "zh-CN",
+  "selectedText": "selected passage",
+  "surroundingContext": ["nearby preceding text", "selected passage", "nearby following text"]
+}
 ```
 
 关闭上下文时 surroundingContext 是空数组。这条自动翻译路径没有历史聊天、文库检索、整篇论文或图片。

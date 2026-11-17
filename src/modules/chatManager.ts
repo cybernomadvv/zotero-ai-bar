@@ -63,6 +63,7 @@ import { createUserMessageBubble } from '../components/userBubble';
 import { disposeChatTurnNavigatorHost } from '../components/chatTurnNavigator';
 import { calculateContextBudget, createCheckpointMessage, type ContextCheckpoint } from './contextCompaction';
 import { buildDocumentSnapshot, createDocumentFingerprint } from '../utils/documentSnapshot';
+import { skillsStore } from './skills/skillStore';
 import { waitForSelectionContext } from '../utils/selectionContext';
 
 Zotero.debug('[zaibar-chatManager] module loaded');
@@ -133,6 +134,10 @@ export class Session {
     thinkingEffortOverride?: Session['thinkingEffort'];
     /** Dedicated structured translation request; independent of chatMode. */
     translationRequest?: TranslationRequestMeta;
+    /** Stable across Retry so the same user correction cannot reinforce twice. */
+    skillEventId?: string;
+    /** Raw latest user input, excluding injected selection/document context. */
+    skillUserText?: string;
     /** Visible user text and quoted selection for the local transcript. */
     displayUserText?: string;
     displayReferenceText?: string;
@@ -161,6 +166,8 @@ export class Session {
     systemMessage: SystemModelMessage;
     thinkingEffort?: Session['thinkingEffort'];
     translationRequest?: TranslationRequestMeta;
+    skillEventId?: string;
+    skillUserText?: string;
     /** conversationHistory.length captured after the pre-turn trim, before
      *  the turn's messages were appended. Retry truncates history back to
      *  this (no-op if the turn errored/aborted and never appended). */
@@ -867,6 +874,9 @@ export class ChatManager {
       }
     }
 
+    await skillsStore.initialize();
+    systemPrompt += '\n\n' + skillsStore.buildPrompt();
+
     return systemPrompt;
   }
 
@@ -947,6 +957,13 @@ export class ChatManager {
     const AC = (typeof AbortController !== 'undefined' ? AbortController : (Zotero.getMainWindow() as any).AbortController) as typeof AbortController;
     const abortController = new AC();
     session.pending.abortController = abortController;
+    const originalSkillTurn = params.messagesOverride ? session.lastTurnSnapshot : undefined;
+    session.pending.skillEventId = params.translationRequest
+      ? undefined
+      : params.messagesOverride
+        ? originalSkillTurn?.skillEventId
+        : `${session.id}:${Date.now()}:${Zotero.Utilities.randomString(12)}`;
+    session.pending.skillUserText = params.translationRequest ? undefined : (params.userPrompt ?? originalSkillTurn?.skillUserText);
     const messagesPromise: Promise<ModelMessage[]> = (async () => {
       // Retry path: replay the snapshotted messages verbatim. Skip context
       // resolution / selectionBlock / lastSentSelectionText so the retried
@@ -961,6 +978,8 @@ export class ChatManager {
           systemMessage: systemMsg,
           thinkingEffort: params.thinkingEffort,
           translationRequest: params.translationRequest,
+          skillEventId: session.pending.skillEventId,
+          skillUserText: session.pending.skillUserText,
           historyLengthBeforeTurn: session.conversationHistory.length,
           displayUserText: params.displayUserText,
           displayReferenceText: params.displayReferenceText,
@@ -1078,6 +1097,8 @@ export class ChatManager {
         systemMessage: systemMsg,
         thinkingEffort: params.thinkingEffort,
         translationRequest: params.translationRequest,
+        skillEventId: session.pending.skillEventId,
+        skillUserText: session.pending.skillUserText,
         historyLengthBeforeTurn: session.conversationHistory.length,
         displayUserText: params.translationRequest ? undefined : (params.displayUserText ?? params.userPrompt),
         displayReferenceText: selectedText,

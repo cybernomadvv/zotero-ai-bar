@@ -228,10 +228,12 @@ export async function streamCodex(
     const imageSupport = model.inputModalities?.includes('image') ?? false;
     const mode = translation ? 'translation' : session.effectiveChatMode;
     const toolDefinitions = translation ? {} : getSharedToolDefinitions();
-    // In normal/full-text mode allow only document-reading tools, not library writes.
+    // Normal/full-text modes permit document reads and plugin skills, not library writes.
     const tools = Object.fromEntries(
       Object.entries(toolDefinitions).filter(
-        ([name]) => name !== 'ask_user' && (mode === 'agent' || ['read', 'grep', 'glob', 'tree', 'capture_page'].includes(name))
+        ([name]) =>
+          name !== 'ask_user' &&
+          (mode === 'agent' || ['read', 'grep', 'glob', 'tree', 'capture_page', 'manage_skill', 'learn_explanation_preference'].includes(name))
       )
     );
     const dynamicTools = Object.entries(tools).map(([name, definition]) => ({

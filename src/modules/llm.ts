@@ -44,7 +44,8 @@ import {
   type ModelSelect,
   type ProviderId,
 } from '../utils/providers';
-import { buildTools } from './agentTools';
+import { buildTools, buildSkillTools } from './agentTools';
+import { skillsStore } from './skills/skillStore';
 import {
   buildFloatingTranslationPrompt,
   extractTranslationFallback,
@@ -270,11 +271,12 @@ export async function streamLLMV2(messagesOrPromise: ModelMessage[] | Promise<Mo
     const maxOutputTokensSetting = maxOutputTokens === undefined ? {} : { maxOutputTokens };
 
     const agentEnabled = session.effectiveChatMode === 'agent';
-    const tools = agentEnabled ? buildTools() : undefined;
+    const skillToolsEnabled = skillsStore.snapshot().skills.some((skill) => skill.enabled);
+    const tools = agentEnabled ? buildTools() : skillToolsEnabled ? buildSkillTools() : undefined;
     ztoolkit.log('[llm] agentEnabled:', agentEnabled, 'tools:', Object.keys(tools ?? {}));
     Zotero.debug('[zaibar-llm] agentEnabled=' + agentEnabled + ', toolCount=' + Object.keys(tools ?? {}).length);
 
-    if (agentEnabled) {
+    if (agentEnabled || skillToolsEnabled) {
       Zotero.debug('[zaibar-llm] using ToolLoopAgent');
 
       // System prompt is passed as agent instructions; remaining messages are
@@ -291,6 +293,7 @@ export async function streamLLMV2(messagesOrPromise: ModelMessage[] | Promise<Mo
         const agent = new ToolLoopAgent({
           model,
           instructions: systemMessage?.content,
+          ...modelSettings,
           tools,
           toolChoice: 'auto',
           stopWhen: stepCountIs(MAX_AGENT_ITERATIONS),

@@ -1,0 +1,261 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>技能与解释偏好</title>
+    <link href="chrome://__addonRef__/content/styles/skins.css" rel="stylesheet" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+      }
+      main {
+        max-width: 1180px;
+        margin: auto;
+      }
+      h1,
+      h2 {
+        font-family: var(--title-font);
+        margin: 0;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      h2 {
+        font-size: 17px;
+      }
+      p {
+        margin: 8px 0;
+        line-height: 1.65;
+        overflow-wrap: anywhere;
+      }
+      header,
+      .section-heading,
+      .actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(210px, 1fr) minmax(0, 2fr);
+        gap: 18px;
+        margin-top: 18px;
+      }
+      .panel {
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--card-shadow);
+      }
+      #skill-list {
+        display: grid;
+        align-content: start;
+        gap: 8px;
+        max-height: 430px;
+        overflow: auto;
+        margin: 14px 0;
+      }
+      button {
+        cursor: pointer;
+        color: var(--text);
+        background: var(--raised, var(--surface));
+        border: 1px solid var(--line);
+        padding: 8px 13px;
+        font-size: 13px;
+      }
+      button:hover:not(:disabled) {
+        border-color: var(--accent);
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .skill-row {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: start;
+        gap: 6px;
+        overflow-wrap: anywhere;
+        width: 100%;
+      }
+      .skill-row[aria-pressed='true'] {
+        background: var(--accent-soft);
+        border-color: var(--accent);
+        color: var(--accent-soft-ink);
+      }
+      label.field {
+        display: grid;
+        gap: 7px;
+        margin: 16px 0;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      input[type='text'],
+      textarea {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+        line-height: 1.6;
+        border: 1px solid var(--line);
+        background: var(--page);
+      }
+      textarea {
+        resize: vertical;
+      }
+      [readonly] {
+        opacity: 0.8;
+      }
+      input[type='checkbox'] {
+        accent-color: var(--accent);
+      }
+      .toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+      }
+      .primary {
+        background: var(--accent);
+        color: var(--accent-ink);
+        border-color: var(--accent);
+      }
+      .actions {
+        justify-content: flex-end;
+      }
+      .learning {
+        margin-top: 18px;
+      }
+      .learning-rules {
+        background: var(--soft);
+        padding: 12px 14px;
+        border-radius: var(--small-radius);
+      }
+      .preference-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 14px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .preference-row > div {
+        min-width: 0;
+      }
+      .preference-row strong {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        font-size: 14px;
+      }
+      .preference-row button {
+        flex-shrink: 0;
+      }
+      .preference-row[data-status='superseded'] strong {
+        color: var(--muted);
+      }
+      #skill-status {
+        min-height: 26px;
+        margin: 12px 0 0;
+        font-size: 13px;
+        white-space: pre-wrap;
+      }
+      #skill-status[data-error='true'] {
+        border-left: 3px solid var(--accent);
+        padding-left: 10px;
+        font-weight: 600;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (max-width: 680px) {
+        body {
+          padding: 14px;
+        }
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+        #skill-list {
+          max-height: 220px;
+        }
+        header {
+          align-items: flex-start;
+        }
+      }
+    </style>
+    <script>
+      window.addEventListener('load', () => {
+        window.arguments[0].onBodyLoaded(window);
+      });
+    </script>
+  </head>
+  <body>
+    <main id="skill-manager" aria-busy="true">
+      <header>
+        <div>
+          <h1>技能与解释偏好</h1>
+          <p class="muted">管理助手的工作指令，查看它从你的明确反馈中学到的解释习惯。</p>
+        </div>
+        <button id="skill-refresh" type="button" disabled="disabled">刷新</button>
+      </header>
+      <p id="skill-status" role="status" aria-live="polite">正在加载技能与偏好…</p>
+      <div class="workspace">
+        <section class="panel" aria-labelledby="skill-list-title">
+          <div class="section-heading">
+            <h2 id="skill-list-title">技能</h2>
+            <button id="skill-new" type="button" disabled="disabled">新建技能</button>
+          </div>
+          <p id="skill-enabled-count" class="muted"></p>
+          <div id="skill-list" aria-label="技能列表"></div>
+        </section>
+        <section class="panel" aria-labelledby="skill-editor-title">
+          <form id="skill-form">
+            <div class="section-heading">
+              <h2 id="skill-editor-title">编辑技能</h2>
+              <label class="toggle"><input id="skill-enabled" type="checkbox" disabled="disabled" />启用此技能</label>
+            </div>
+            <p id="skill-builtin-note" class="muted" hidden="hidden">
+              内置技能的名称与指令仅供查看，可以随时启用或停用。学到的偏好可在下方逐条忘记。
+            </p>
+            <label class="field" for="skill-name">名称<input id="skill-name" type="text" required="required" disabled="disabled" /></label>
+            <label class="field" for="skill-description">说明<textarea id="skill-description" rows="2" disabled="disabled"></textarea></label>
+            <label class="field" for="skill-instructions"
+              >技能指令<textarea
+                id="skill-instructions"
+                rows="8"
+                required="required"
+                disabled="disabled"
+                placeholder="说明助手应在什么情境下，按照哪些步骤或要求工作。"
+              ></textarea>
+            </label>
+            <div class="actions">
+              <button id="skill-delete" type="button" disabled="disabled">删除技能</button
+              ><button id="skill-save" class="primary" type="submit" disabled="disabled">保存技能</button>
+            </div>
+          </form>
+        </section>
+      </div>
+      <section class="panel learning" aria-labelledby="skill-preferences-title">
+        <div class="section-heading">
+          <h2 id="skill-preferences-title">已学习的解释偏好</h2>
+          <span id="skill-preferences-count" class="muted"></span>
+        </div>
+        <p class="learning-rules muted">
+          首次明确纠正会记为 L0；在独立反馈中反复确认，逐级提升至 L3。出现冲突时，旧规则降级并被替代，新规则从 L0
+          开始。偏好只在相应情境中生效，本次明确指令始终优先。
+        </p>
+        <div id="skill-preferences" aria-label="已学习的解释偏好列表"></div>
+      </section>
+    </main>
+  </body>
+</html>

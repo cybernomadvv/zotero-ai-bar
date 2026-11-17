@@ -8,6 +8,7 @@
 import { tool, asSchema } from 'ai';
 import type { z } from 'zod';
 import type { Session, AgentUserAnswer } from './chatManager';
+import { skillToolDefinitions } from './skills/skillTools';
 import { getItemFullText } from '../utils/itemContext';
 import {
   getZoteroItem,
@@ -72,6 +73,13 @@ function defineSharedTool(definition: SharedToolDefinition) {
   const sdkTool = tool({ ...definition, inputSchema: asSchema(definition.inputSchema) });
   sharedToolDefinitions.set(sdkTool, definition);
   return sdkTool;
+}
+
+const manageSkillTool = defineSharedTool(skillToolDefinitions.manage_skill);
+const learnExplanationPreferenceTool = defineSharedTool(skillToolDefinitions.learn_explanation_preference);
+
+export function buildSkillTools() {
+  return { manage_skill: manageSkillTool, learn_explanation_preference: learnExplanationPreferenceTool };
 }
 
 /** Both backends call the same handlers; Codex arguments are validated before any Zotero access. */
@@ -290,6 +298,7 @@ export const capturePageTool = defineSharedTool({
 
 export function buildTools(_options?: { imageSupport?: boolean }) {
   return {
+    ...buildSkillTools(),
     ask_user: askUserTool,
     grep: grepTool,
     read: readTool,

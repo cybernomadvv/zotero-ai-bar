@@ -28,5 +28,5 @@ addon/content/app.css
 # Local customization artifacts and profile backups
 local-backups/
 .local-runtime/
-local-startup.log
+local-startup*.log
 dist/

@@ -12,5 +12,21 @@ export default zotero({
         '@typescript-eslint/no-unused-vars': 'off',
       },
     },
+    {
+      files: ['site/**/*.js'],
+      languageOptions: {
+        globals: {
+          window: 'readonly',
+          document: 'readonly',
+          navigator: 'readonly',
+          localStorage: 'readonly',
+          innerHeight: 'readonly',
+          scrollY: 'readonly',
+          requestAnimationFrame: 'readonly',
+          IntersectionObserver: 'readonly',
+          Event: 'readonly',
+        },
+      },
+    },
   ],
 });
