@@ -1186,6 +1186,7 @@ export class ChatManager {
     } finally {
       if (session.activeRequestPromise === requestPromise) {
         session.activeRequestPromise = undefined;
+        this.notifyHistoryChanged();
       }
     }
   }

@@ -65,6 +65,7 @@ import { registerChatSkinRoot } from '../utils/chatSkin';
 import { disposeChatTabHighlight, syncChatTabHighlight } from '../utils/chatTabHighlight';
 import { createSkinPreview } from '../components/skinPreview';
 import type { Session } from './chatManager';
+import { openSkillManager } from './skills/skillManager';
 import {
   GLOBAL_AGENT_SESSION_ID,
   getSessionId,
@@ -453,7 +454,17 @@ export function registerMainWindowSidePane(win: _ZoteroTypes.MainWindow): void {
     await switchChatHost('window');
   });
 
-  header.append(tabs, historyBtn, newChatBtn, hostSwitchBtn);
+  const skillBtn = ztoolkit.UI.createElement(doc, 'button', { namespace: 'html' }) as HTMLButtonElement;
+  skillBtn.type = 'button';
+  skillBtn.id = 'zaibar-sidepane-skill-button';
+  skillBtn.classList.add('zaibar-sidepane-btn');
+  skillBtn.textContent = 'Skill';
+  skillBtn.title = '管理 Skill · 技能与解释偏好';
+  skillBtn.setAttribute('aria-label', skillBtn.title);
+  skillBtn.style.cssText = 'width:auto;min-width:42px;padding:0 6px;flex-shrink:0;';
+  skillBtn.addEventListener('click', openSkillManager);
+
+  header.append(tabs, skillBtn, historyBtn, newChatBtn, hostSwitchBtn);
 
   // Per-tab pages
   const deck = createXUL('deck');

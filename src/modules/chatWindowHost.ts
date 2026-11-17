@@ -15,6 +15,7 @@ import { registerChatSkinRoot } from '../utils/chatSkin';
 import { disposeChatTabHighlight, syncChatTabHighlight } from '../utils/chatTabHighlight';
 import { createSkinPreview } from '../components/skinPreview';
 import type { Session } from './chatManager';
+import { openSkillManager } from './skills/skillManager';
 import {
   GLOBAL_AGENT_SESSION_ID,
   getSessionId,
@@ -472,7 +473,15 @@ export function ensureChatWindowUI(doc: Document) {
     const { switchChatHost } = await import('./chatHostController');
     await switchChatHost('sidebar');
   });
-  header.append(tabs, history, newChat, hostSwitch);
+  const skills = doc.createElement('button');
+  skills.type = 'button';
+  skills.classList.add('zaibar-window-clear', 'zaibar-window-skills');
+  skills.textContent = 'Skill';
+  skills.title = '管理 Skill · 技能与解释偏好';
+  skills.setAttribute('aria-label', skills.title);
+  skills.style.cssText = 'width:auto;min-width:42px;padding:0 6px;flex-shrink:0;';
+  skills.addEventListener('click', openSkillManager);
+  header.append(tabs, skills, history, newChat, hostSwitch);
 
   const deck = doc.createElement('div');
   deck.classList.add(WINDOW_DECK_CLASS, 'flex', 'flex-1', 'min-h-0', 'flex-col');
