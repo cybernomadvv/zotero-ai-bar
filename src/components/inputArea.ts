@@ -418,6 +418,15 @@ export function InputArea(
   inputRow.appendChild(chatModeBtn);
   inputRow.appendChild(screenshotBtn);
   inputRow.appendChild(textarea);
+  // Measure without collapsing the focused editor; IME candidate positioning
+  // reads its caret geometry while input events are being dispatched.
+  const inputMeasure = textarea.cloneNode(false) as HTMLTextAreaElement;
+  inputMeasure.removeAttribute('contenteditable');
+  inputMeasure.setAttribute('aria-hidden', 'true');
+  inputMeasure.tabIndex = -1;
+  inputMeasure.inert = true;
+  inputMeasure.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;height:0;min-height:0;max-height:none;overflow:hidden;';
+  inputRow.appendChild(inputMeasure);
   inputRow.appendChild(thinkingBtn);
   inputRow.appendChild(modelInfoBtn);
   inputRow.appendChild(sendBtn);
@@ -447,15 +456,17 @@ export function InputArea(
   // ─────────────────────────────────────────────────────────────────────────
   // Helper: auto-resize textarea height
   // ─────────────────────────────────────────────────────────────────────────
+  let isComposing = false;
   function autoResize() {
-    textarea.style.height = 'auto';
-    // InputArea is assembled before it is attached to the shadow root. An
-    // unattached textarea reports a zero scrollHeight; persisting that as an
-    // inline height leaves an almost unclickable input with a displaced
-    // placeholder. Leave the row-sized native height in place until layout is
-    // available.
-    if (!textarea.isConnected || textarea.scrollHeight <= 0) return;
-    textarea.style.height = Math.min(textarea.scrollHeight, 112) + 'px'; // 112 ≈ 7rem
+    if (isComposing || !textarea.isConnected) return;
+    const width = textarea.getBoundingClientRect().width;
+    if (width <= 0) return;
+    const style = doc.defaultView?.getComputedStyle(textarea);
+    if (style) inputMeasure.style.font = style.font;
+    inputMeasure.style.width = `${width}px`;
+    inputMeasure.value = textarea.value;
+    const height = Math.min(inputMeasure.scrollHeight, 112);
+    if (height > 0) textarea.style.height = `${height}px`;
   }
 
   function resizeAfterMount() {
@@ -628,6 +639,15 @@ export function InputArea(
   // Event wiring
   // ─────────────────────────────────────────────────────────────────────────
 
+  textarea.addEventListener('compositionstart', () => {
+    isComposing = true;
+  });
+  textarea.addEventListener('compositionend', () => {
+    isComposing = false;
+    persistTextDraft();
+    resizeAfterMount();
+    updateSendBtnState();
+  });
   // textarea: auto-resize + button state sync
   textarea.addEventListener('input', () => {
     persistTextDraft();
@@ -665,6 +685,7 @@ export function InputArea(
 
   // Enter to send, Shift+Enter for newline
   textarea.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (isComposing || e.isComposing || e.keyCode === 229) return;
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (!sendBtn.disabled && sendBtn.dataset.mode === 'send') {

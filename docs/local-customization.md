@@ -89,3 +89,11 @@
 - 隔离 Zotero 中打开真实 PDF，验证两个 Hy4 flash 模型出现在实际模型下拉框并可选择；打开、关闭模型设置后凭据保留。真实 Hy4 flash 问答返回 `MAGPIE_ZOTERO_OK`。
 - 本机升级前备份至 `local-backups/20261117-144730/`。仅在本地恢复缺失的 Magpie 配置及凭据，保持当前选择 `workbuddy/glm-5.3-flashx`；凭据不写入源码或安装包。
 
+## 侧栏输入与输入法组合输入稳定性
+
+- 输入高度改由独立的不可见、不可聚焦 textarea 测量，避免每次输入先把活动编辑器高度重置为 `auto`。组合输入期间保持活动输入框高度，组合结束后再更新。
+- 输入法组合期间的 Enter 及兼容路径 keyCode 229 不触发发送；普通 Enter 发送、Shift+Enter 换行保持原行为。
+- `scripts/verify-input-zotero.mjs` 在隔离 Zotero 的实际 PDF 阅读侧栏中验证：组合事件期间坐标与焦点稳定、文字保留、候选确认不发送、普通发送、多行伸缩和测量框不可见。
+- 构建、TypeScript、相关 ESLint 及原生输入回归通过。本机更新前备份：`local-backups/20261117-151410/`；安装包哈希与构建产物一致，启动确认 initialized=true。
+- 验证使用合成组合事件，未自动化 Windows 输入法候选窗口的绘制；实际系统输入法闪现情况需在日常输入中观察。
+
