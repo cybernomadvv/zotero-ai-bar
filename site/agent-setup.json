@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "product": "zotero AI bar",
+  "kind": "agent-installation-instructions",
+  "instructions_url": "https://cybernomadvv.github.io/zotero-ai-bar/agent-setup.md",
+  "package_url": "https://cybernomadvv.github.io/zotero-ai-bar/downloads/zotero-ai-bar.xpi",
+  "sha256_url": "https://cybernomadvv.github.io/zotero-ai-bar/downloads/SHA256SUMS.txt",
+  "source_commit_url": "https://cybernomadvv.github.io/zotero-ai-bar/downloads/source-commit.txt",
+  "repository": "https://github.com/cybernomadvv/zotero-ai-bar",
+  "addon_id": "zaibar@fukeke.com",
+  "original_author": "swcxito",
+  "license": "AGPL-3.0-or-later",
+  "requires": ["user-authorized local filesystem access", "Zotero profile identification", "model credentials when not already configured"],
+  "offline_assets_bundled": false,
+  "contains_credentials": false
+}

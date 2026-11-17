@@ -14,6 +14,7 @@ for (const tab of tabs) {
     }
     panel.innerHTML = demos[tab.dataset.demo];
     panel.setAttribute('aria-labelledby', tab.id);
+    panel.dispatchEvent(new Event('demochange'));
   });
   tab.addEventListener('keydown', (event) => {
     let index = tabs.indexOf(tab);
@@ -25,5 +26,25 @@ for (const tab of tabs) {
     event.preventDefault();
     tabs[index].focus();
     tabs[index].click();
+  });
+}
+
+for (const button of document.querySelectorAll('[data-copy-target]')) {
+  button.addEventListener('click', async () => {
+    const prompt = document.getElementById(button.dataset.copyTarget);
+    const status = button.closest('.agent-command').querySelector('.copy-status');
+    try {
+      await navigator.clipboard.writeText(prompt.textContent.trim());
+      status.textContent = '已复制。粘贴给有本机操作权限的 Agent 即可。';
+      button.textContent = '再次复制 ↗';
+    } catch {
+      prompt.focus();
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(prompt);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      status.textContent = '浏览器限制了自动复制，已选中指令。请按 Ctrl+C，或在 Mac 上按 ⌘C。';
+    }
   });
 }

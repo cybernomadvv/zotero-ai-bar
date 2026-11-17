@@ -12,6 +12,10 @@ Zotero 文献阅读助手：划词提问、上下文问答、悬浮翻译，以�
 
 官网位于 `site/`，使用 GitHub Pages 免费托管，无需服务器、数据库或第三方统计服务。更新 `custom` 分支中的网站或插件源码会触发 `.github/workflows/pages.yml`，从已提交源码构建 XPI 并与网站一同部署。安装包校验和及对应源码提交分别位于网站 `downloads/SHA256SUMS.txt` 和 `downloads/source-commit.txt`。本地预览可运行 `python -m http.server 4187 --directory site`；下载文件在 CI 构建时生成。
 
+网站视觉及动效参考 GitHub 上的 [UI UX Pro Max skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/blob/main/.claude/skills/ui-ux-pro-max/SKILL.md) 的交互、动效时长及可访问性建议。`site/motion.css` 与 `site/motion.js` 使用原生 CSS、IntersectionObserver 和 Web Animations 实现入场、滚动呈现、面板切换与操作反馈，不加载第三方动画库。右下角可关闭动效；系统设置 `prefers-reduced-motion` 时自动关闭，关闭 JavaScript 也不会隐藏正文。
+
+官网增加 [交给 Agent 配置](https://cybernomadvv.github.io/zotero-ai-bar/#agent-setup)：用户可一键复制任务指令。`site/agent-setup.md` 提供本机环境识别、profile 选择、备份、安装校验、服务商合并及验证步骤；`site/agent-setup.json` 提供机器可读的资源清单。执行 Agent 需要用户授权的本机操作能力，模型账号、登录及缺失凭据仍由用户提供；网站不包含密钥，也不替用户购买模型服务。
+
 ## 功能
 
 - **划词提问**：选中文献内容后解释、总结、翻译或输入问题，按需附加选区上下文。
