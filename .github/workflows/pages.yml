@@ -1,0 +1,56 @@
+name: Deploy website
+
+on:
+  push:
+    branches: [custom]
+    paths:
+      - 'site/**'
+      - '.github/workflows/pages.yml'
+      - 'src/**'
+      - 'addon/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'zotero-plugin.config.ts'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npx --yes pnpm@10.28.0 install --frozen-lockfile
+      - name: Build downloadable plugin
+        run: npx --yes pnpm@10.28.0 build
+      - name: Prepare website and source reference
+        run: |
+          mkdir -p site/downloads
+          cp .scaffold/build/zotero-ai-bar.xpi site/downloads/zotero-ai-bar.xpi
+          touch site/.nojekyll
+          sha256sum site/downloads/zotero-ai-bar.xpi > site/downloads/SHA256SUMS.txt
+          printf '%s\n' "$GITHUB_SHA" > site/downloads/source-commit.txt
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment

@@ -8,6 +8,10 @@ Zotero 文献阅读助手：划词提问、上下文问答、悬浮翻译，以�
 
 [本 fork 仓库](https://github.com/freeshr1107-free/zotero-ai-bar) · [问题反馈](https://github.com/freeshr1107-free/zotero-ai-bar/issues) · [构建产物](https://github.com/freeshr1107-free/zotero-ai-bar/actions/workflows/ci.yml) · [发布页](https://github.com/freeshr1107-free/zotero-ai-bar/releases)
 
+[访问官网](https://cybernomadvv.github.io/zotero-ai-bar/) · [安装与使用指南](https://cybernomadvv.github.io/zotero-ai-bar/guide.html) · [直接下载 XPI](https://cybernomadvv.github.io/zotero-ai-bar/downloads/zotero-ai-bar.xpi)
+
+官网位于 `site/`，使用 GitHub Pages 免费托管，无需服务器、数据库或第三方统计服务。更新 `custom` 分支中的网站或插件源码会触发 `.github/workflows/pages.yml`，从已提交源码构建 XPI 并与网站一同部署。安装包校验和及对应源码提交分别位于网站 `downloads/SHA256SUMS.txt` 和 `downloads/source-commit.txt`。本地预览可运行 `python -m http.server 4187 --directory site`；下载文件在 CI 构建时生成。
+
 ## 功能
 
 - **划词提问**：选中文献内容后解释、总结、翻译或输入问题，按需附加选区上下文。
